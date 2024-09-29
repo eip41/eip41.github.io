@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hover to Change Zeros with Pointer Effect</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            white-space: nowrap; /* Prevent line breaks */
+        }
+        #resetButton {
+            margin: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .line {
+            font-size: 24px;
+            line-height: 1.5;
+        }
+        .zero {
+            display: inline-block;
+            width: 20px; /* Width to allow spacing */
+            text-align: center;
+            transition: color 0.3s;
+        }
+        .zero:hover {
+            color: #007BFF; /* Change color on hover */
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<button id="resetButton">Reset Grid</button>
+<div id="container"></div>
+
+<script>
+    const container = document.getElementById('container');
+    const totalLines = 100;
+    const totalZerosPerLine = 100;
+    const cookieName = 'changedZeros';
+    let changedZeros = getCookie(cookieName) ? getCookie(cookieName).split(',').map(Number) : [];
+
+    // Function to set a cookie
+    function setCookie(name, value, days) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+    }
+
+    // Function to get a cookie
+    function getCookie(name) {
+        return document.cookie.split('; ').reduce((r, v) => {
+            const parts = v.split('=');
+            return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+        }, '');
+    }
+
+    // Generate 100 lines with 100 zeros
+    const zerosArray = [];
+    for (let i = 0; i < totalLines; i++) {
+        const line = document.createElement('div');
+        line.className = 'line';
+        const lineArray = [];
+
+        for (let j = 0; j < totalZerosPerLine; j++) {
+            const index = i * totalZerosPerLine + j; // Calculate the index
+            const zero = document.createElement('span');
+            zero.className = 'zero';
+            zero.innerText = changedZeros.includes(index) ? '1' : '0'; // Set initial value
+
+            lineArray.push(zero);
+            zero.addEventListener('mouseover', () => handleHover(index));
+
+            line.appendChild(zero);
+        }
+        zerosArray.push(lineArray);
+        container.appendChild(line);
+    }
+
+    // Handle hover to change zeros
+    function handleHover(index) {
+        const [lineIndex, zeroIndex] = [Math.floor(index / totalZerosPerLine), index % totalZerosPerLine];
+
+        // Change the hovered zero
+        changeZero(index);
+
+        // Change adjacent zeros (left, right, above, below)
+        if (zeroIndex > 0) changeZero(index - 1); // Left
+        if (zeroIndex < totalZerosPerLine - 1) changeZero(index + 1); // Right
+        if (lineIndex > 0) changeZero(index - totalZerosPerLine); // Above
+        if (lineIndex < totalLines - 1) changeZero(index + totalZerosPerLine); // Below
+    }
+
+    // Change zero to 1 and save to cookie
+    function changeZero(index) {
+        if (!changedZeros.includes(index)) {
+            changedZeros.push(index);
+            setCookie(cookieName, changedZeros.join(','), 7);
+        }
+        const lineIndex = Math.floor(index / totalZerosPerLine);
+        const zeroIndex = index % totalZerosPerLine;
+        zerosArray[lineIndex][zeroIndex].innerText = '1';
+        zerosArray[lineIndex][zeroIndex].style.color = '#007BFF'; // Change color
+    }
+
+    // Add reset functionality
+    const resetButton = document.getElementById('resetButton');
+    resetButton.addEventListener('click', resetGrid);
+
+    function resetGrid() {
+        // Clear cookie
+        setCookie(cookieName, '', -1);
+        // Reset all zeros to 0
+        changedZeros.length = 0;
+        for (let i = 0; i < totalLines; i++) {
+            for (let j = 0; j < totalZerosPerLine; j++) {
+                const index = i * totalZerosPerLine + j;
+                zerosArray[i][j].innerText = '0';
+                zerosArray[i][j].style.color = 'black'; // Reset color
+            }
+        }
+    }
+
+</script>
+
+</body>
+</html>
